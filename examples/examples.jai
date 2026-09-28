@@ -74,7 +74,7 @@ main :: () {
 			    if context.device {
 				SDL_GDKSuspendGPU(context.device);
 				can_draw = false;
-				SDL_GDKSuspendCompete();
+				SDL_GDKSuspendComplete();
 			    }
 			}
 		    } else if event.user.code == 1 {
