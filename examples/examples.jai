@@ -1,19 +1,19 @@
-#import("Command_Line");
-#import("jai-sdl3"); 
+#import "Command_Line";
+#import "jai-sdl3";
 
-#load("common.jai");
-#load("basic_triangle.jai");
-#load("depth_sampler.jai");
-#load("instanced_indexed.jai");
-#load("compute_uniforms.jai");
+#load "common.jai";
+#load "basic_triangle.jai";
+#load "depth_sampler.jai";
+#load "instanced_indexed.jai";
+#load "compute_uniforms.jai";
 
 Args :: struct {
     name := "";
     number := -1;
 }
 
-main :: () {	
-    
+main :: () {
+
     example_index := -1;
     goto_example_index := 0;
     quit := false;
@@ -23,7 +23,7 @@ main :: () {
     array_add(*examples, depth_sampler_example);
     array_add(*examples, instanced_indexed_example);
     array_add(*examples, compute_uniforms_example);
-    
+
     defer array_free(examples);
 
     success, args, is_set, free_args := parse_arguments(Args);
@@ -36,7 +36,7 @@ main :: () {
 	    }
 	}
     }
-    
+
     if !SDL_Init(.VIDEO) {
 	log("Failed to initialize SDL: %", SDL_GetError());
 	return;
@@ -91,7 +91,7 @@ main :: () {
 		    if event.key.key == {
 			case SDLK_D;
 			{
-			    goto_example_index = (example_index + 1) % examples.count;			    
+			    goto_example_index = (example_index + 1) % examples.count;
 			}
 
 			case SDLK_A;
@@ -128,41 +128,41 @@ main :: () {
 		    } else if event.button.button == SDL_BUTTON_RIGHT {
 			 goto_example_index = (example_index + 1) % examples.count;
 		    }
-		} 
+		}
 	    }
 	}
 
 	if quit {
 	    break;
 	}
-	
+
 	if goto_example_index != -1 {
 	    if example_index != -1 {
 		examples[example_index].quit();
 	    }
-	
+
 	    example_index = goto_example_index;
 	    goto_example_index = -1;
 	    context.example_name = examples[example_index].name;
-	
+
 	    log("Starting example %", context.example_name);
-	
+
 	    if examples[example_index].init() < 0 {
 		log("init failed");
 		return;
 	    }
 	}
-	
+
 	new_time := SDL_GetTicks() / 1000.0;
 	context.delta_time = new_time - last_time;
 
 	last_time = new_time;
-	
+
 	if examples[example_index].update() < 0 {
 	    log("update failed");
 	    return;
 	}
-	
+
 	if can_draw {
 	    if examples[example_index].draw() < 0 {
 		log("draw failed");

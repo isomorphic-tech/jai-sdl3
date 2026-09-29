@@ -1,12 +1,12 @@
-#import("Basic");
-#import("File_Utilities");
-#import("Math");
-#import("File");
-#import("stb_image");
-#import("String");
-#import("System");
+#import "Basic";
+#import "File_Utilities";
+#import "Math";
+#import "File";
+#import "stb_image";
+#import "String";
+#import "System";
 
-#import("jai-sdl3");
+#import "jai-sdl3";
 
 #add_context example_name: string = "";
 #add_context base_path: string = "";
@@ -40,7 +40,7 @@ common_init :: (window_flags: SDL_WindowFlags) -> bool {
     assert(context.device == null && context.window == null);
 
     init_base_path();
-    
+
     context.device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, true, null);
     if context.device == null {
 	log("CreateGPUDevice failes");
@@ -49,24 +49,24 @@ common_init :: (window_flags: SDL_WindowFlags) -> bool {
 
     example_name_as_cstring := string_to_cstring(context.example_name);
     defer free(example_name_as_cstring);
-    
+
     context.window = SDL_CreateWindow(example_name_as_cstring, 640, 500, window_flags);
     if context.window == null {
 	common_quit();
-	
+
 	log("CreateWindow failed %", SDL_GetError());
 	return false;
     }
 
     if !SDL_ClaimWindowForGPUDevice(context.device, context.window) {
 	common_quit();
-	
+
 	log("ClaimWindowForGPUDevice failed");
 	return false;
     }
 
     return true;
-    
+
 }
 
 common_quit :: () {
@@ -82,7 +82,7 @@ common_quit :: () {
     if context.device {
 	SDL_DestroyGPUDevice(context.device);
     }
-    
+
     context.window = null;
     context.device = null;
 
@@ -91,9 +91,9 @@ common_quit :: () {
 
 load_shader_file :: (device: *SDL_GPUDevice, filename: string) -> code: *void, code_size: u64, stage: SDL_GPUShaderStage, format: u32, entry_point: string {
     assert(device != null); // todo file exists
-    
+
     stage: SDL_GPUShaderStage;
-    
+
     if ends_with(filename, ".vert") {
 	stage = .SDL_GPU_SHADERSTAGE_VERTEX;
     } else if ends_with(filename, ".frag") {
@@ -110,7 +110,7 @@ load_shader_file :: (device: *SDL_GPUDevice, filename: string) -> code: *void, c
 
     init_string_builder(*shader_file_path_builder);
     print_to_builder(*shader_file_path_builder, base_path);
-    
+
     print_to_builder(*shader_file_path_builder, "Content/Shaders/Compiled/");
 
     if backend_format & SDL_GPU_SHADERFORMAT_SPIRV {
@@ -118,7 +118,7 @@ load_shader_file :: (device: *SDL_GPUDevice, filename: string) -> code: *void, c
 	print_to_builder(*shader_file_path_builder, "SPIRV/");
 	print_to_builder(*shader_file_path_builder, filename);
 	print_to_builder(*shader_file_path_builder, ".spv");
-	
+
     } else if backend_format & SDL_GPU_SHADERFORMAT_MSL {
 	shader_format = SDL_GPU_SHADERFORMAT_MSL;
 	entry_point = "main0";
@@ -139,12 +139,12 @@ load_shader_file :: (device: *SDL_GPUDevice, filename: string) -> code: *void, c
     shader_path := builder_to_string(*shader_file_path_builder);
 
     log("loading shader file at %", shader_path);
-    
+
     shader_path_as_cstring := string_to_cstring(shader_path);
     defer free(shader_path_as_cstring);
-    
+
     code := SDL_LoadFile(shader_path_as_cstring, *code_size);
-    
+
     if code == null {
 	log("Failed to load shader from %", shader_path);
 	return null, 0, stage, SDL_GPU_SHADERFORMAT_INVALID, "";
@@ -198,9 +198,9 @@ create_compute_pipeline_from_shader :: (device: *SDL_GPUDevice, filename: string
 
     entry_point_as_cstring := string_to_cstring(entry_point);
     defer free(entry_point_as_cstring);
-    
+
     ci := create_info.*;
-    
+
     ci.code = code;
     ci.code_size = code_size;
     ci.entrypoint = entry_point_as_cstring;
@@ -219,7 +219,7 @@ load_image :: (filename: string, desired_channels: int) -> *SDL_Surface {
     assert(desired_channels == 4);
     filename_as_cstring := string_to_cstring(filename);
     defer free(filename_as_cstring);
-    
+
     result := SDL_LoadBMP(filename_as_cstring);
     if result == null {
 	log("Failed to load BMP: %", SDL_GetError());
@@ -249,7 +249,7 @@ load_image :: (filename: string, desired_channels: int) -> *SDL_Surface {
 load_hdr_image :: (filename: string, width: *s32, height: *s32, channels: *s32, desired_channels: s32) -> *float {
     filename_as_cstring := string_to_cstring(filename);
     defer free(filename_as_cstring);
-    
+
     return stbi_loadf(filename_as_cstring, width, height, channels, desired_channels);
 }
 
@@ -305,7 +305,7 @@ load_astc_image :: (filename: string, width: *int, height: *int, image_data_leng
     size: u64;
     filename_as_cstring := string_to_cstring(filename);
     defer free(filename_as_cstring);
-    
+
     file_contents := SDL_LoadFile(filename_as_cstring, *size);
 
     if file_contents == null {
@@ -314,27 +314,27 @@ load_astc_image :: (filename: string, width: *int, height: *int, image_data_leng
     }
 
     defer SDL_free(file_contents);
-    
+
     header := cast(*ASTCHeader) file_contents;
     if header.magic[0] != 0x13 || header.magic[1] != 0xAB || header.magic[2] != 0xA1 || header.magic[3] != 0x5C {
 
 	log("Bad magic number for ASTC image");
 	return null;
     }
-    
+
     width.* = header.dimX[0] + (header.dimX[1] << 8) + (header.dimX[2] << 16);
     height.* = header.dimY[0] + (header.dimY[1] << 8) + (header.dimY[2] << 16);
-    
+
     // Get the size of the texture data
     block_count_x := (width.* + header.blockX - 1) / header.blockX;
     block_count_y := (height.* + header.blockY - 1) / header.blockY;
 
     image_data_length.* = block_count_x * block_count_y * 16;
 
-    file_content_ptr: *u8 = xx file_contents;  
+    file_content_ptr: *u8 = xx file_contents;
     data := alloc(image_data_length.*);
     memcpy(data, file_content_ptr + size_of(ASTCHeader), image_data_length.*);
-        
+
     return data;
 }
 
@@ -342,7 +342,7 @@ load_dds_image :: (filename: string, format: SDL_GPUTextureFormat, width: *int, 
     size: u64;
     filename_as_cstring := string_to_cstring(filename);
     defer free(filename_as_cstring);
-    
+
     file_contents := SDL_LoadFile(filename_as_cstring, *size);
 
     if file_contents == null {
@@ -363,7 +363,7 @@ load_dds_image :: (filename: string, format: SDL_GPUTextureFormat, width: *int, 
     if has_dx10_header {
 	header_offset += size_of(DDS_HEADER_DXT10);
     }
-    
+
     width.* = header.dwWidth;
     height.* = header.dwHeight;
     image_data_length.* = header.dwPitchOrLinearSize;
@@ -372,7 +372,7 @@ load_dds_image :: (filename: string, format: SDL_GPUTextureFormat, width: *int, 
     file_contents_ptr += header_offset;
     data := alloc(image_data_length.*);
     memcpy(data, file_contents_ptr, image_data_length.*);
-    
+
     return data;
 }
 
@@ -401,20 +401,20 @@ Matrix4x4_CreateOrthographicOffCenter :: (left: float, right: float, bottom: flo
 	2.0 / (right - left), 0, 0, 0,
 	0, 2.0 / (top - bottom), 0, 0,
 	0, 0, 1.0 / (near_plane - far_plane), 0,
-	(left + right) / (left - right), (top + bottom) / (bottom - top), near_plane / (near_plane - far_plane), 1 
+	(left + right) / (left - right), (top + bottom) / (bottom - top), near_plane / (near_plane - far_plane), 1
     };
 }
 
 Matrix4x4_CreatePerspectiveFieldOfView :: (fov: float, aspect_ratio: float, near_plane_dist: float, far_plane_dist: float) -> Matrix4 {
     num := 1.0 / cast(float) tan(fov * 0.5);
-    
+
     return .{
 	num / aspect_ratio, 0, 0, 0,
 	0, num, 0, 0,
 	0, 0, far_plane_dist / (near_plane_dist - far_plane_dist), -1,
 	0, 0, (near_plane_dist * far_plane_dist) / (near_plane_dist - far_plane_dist), 0
     };
-    
+
 }
 
 
@@ -436,11 +436,11 @@ Matrix4x4_CreateLookAt :: (camera_pos: Vector3, target: Vector3, camera_up: Vect
 
 #scope_file
 
-string_to_cstring :: (s: string) -> *u8 { 
+string_to_cstring :: (s: string) -> *u8 {
     cstring := cast(*u8) alloc(s.count + 1);
     memcpy(cstring, s.data, s.count);
     cstring[s.count] = 0;
-    
+
     return cstring;
 }
 
